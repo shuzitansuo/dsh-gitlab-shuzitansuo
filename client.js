@@ -513,9 +513,17 @@ body[data-ds-dark-theme] .gl-root{
 .gl-event-detail{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--td-font-family-code);font-size:12px;color:var(--td-text-color-secondary);text-decoration:none}
 a.gl-event-detail:hover{color:var(--td-brand-color);text-decoration:underline}
 .gl-event-time{flex:0 0 auto;white-space:nowrap}
-.gl-day{display:flex;flex-direction:column;min-width:0}
-.gl-day-head{position:sticky;top:0;z-index:1;padding:8px 16px;background:var(--td-bg-color-container);font:var(--td-font-body-small);font-weight:600;color:var(--td-text-color-secondary);border-bottom:1px solid var(--td-component-stroke)}
-.gl-commit{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-bottom:1px solid var(--td-component-stroke);min-width:0}
+.gl-timeline{position:relative;flex:0 0 auto}
+.gl-timeline:before{content:'';position:absolute;left:24px;top:12px;bottom:0;width:1px;background:var(--td-component-stroke)}
+.gl-day{position:relative;display:flex;flex-direction:column;min-width:0}
+.gl-day-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;height:36px;padding:0 16px 0 44px;background:var(--td-bg-color-container);font:var(--td-font-body-small);font-weight:600;color:var(--td-text-color-secondary)}
+.gl-day-head:before{content:'';position:absolute;left:24px;top:0;bottom:0;width:1px;background:var(--td-component-stroke)}
+.gl-day-node{position:absolute;left:15px;top:50%;transform:translateY(-50%);z-index:1;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:var(--td-bg-color-container);color:var(--gl-icon)}
+.gl-day-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gl-commit{display:flex;align-items:flex-start;gap:10px;padding:10px 16px 10px 44px;border-bottom:1px solid var(--td-component-stroke);min-width:0}
+.gl-commit-tags{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;margin-top:1px;max-width:200px;overflow:hidden}
+.gl-tag-pill{display:inline-flex;align-items:center;gap:3px;max-width:120px;height:20px;padding:0 7px;border-radius:10px;background:var(--td-bg-color-secondarycontainer);color:var(--td-text-color-secondary);font-size:11px;line-height:18px;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gl-tag-pill:hover{background:var(--td-brand-color-light);color:var(--td-brand-color)}
 .gl-commit:hover{background:var(--td-bg-color-container-hover)}
 .gl-commit-sha{flex:0 0 auto;margin-top:1px;padding:0 5px;border-radius:3px;background:var(--td-bg-color-secondarycontainer);color:var(--td-text-color-secondary);font:var(--td-font-body-small);font-family:var(--td-font-family-code);text-decoration:none;line-height:18px}
 a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-brand-color)}
@@ -1747,11 +1755,19 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
             items.length === 0
               ? h('div', { className: 'gl-empty' }, '这条引用还没有提交')
               : [
-                  ...groupCommitsByDay(items).map((group) =>
+                  h(
+                    'div',
+                    { key: 'timeline', className: 'gl-timeline' },
+                    groupCommitsByDay(items).map((group) =>
                     h(
                       'div',
                       { key: 'day-' + group.key, className: 'gl-day' },
-                      h('div', { className: 'gl-day-head' }, group.label),
+                      h(
+                        'div',
+                        { className: 'gl-day-head' },
+                        h('span', { className: 'gl-day-node' }, h(GlyphIcon, { name: 'commit', size: 14 })),
+                        h('span', { className: 'gl-day-label' }, group.label),
+                      ),
                       group.items.map((commit) =>
                         h(
                           'div',
@@ -1775,6 +1791,27 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
                               (commit.authorName || '未知作者') + ' · ' + formatTime(commit.committedDate),
                             ),
                           ),
+                          commit.tags && commit.tags.length
+                            ? h(
+                                'span',
+                                { className: 'gl-commit-tags' },
+                                commit.tags.slice(0, 3).map((tag) =>
+                                  h(
+                                    'a',
+                                    {
+                                      key: tag,
+                                      className: 'gl-tag-pill',
+                                      href: selectedProject ? selectedProject.webUrl + '/-/tags/' + encodeRefPath(tag) : undefined,
+                                      target: '_blank',
+                                      rel: 'noreferrer noopener',
+                                      title: 'Tag ' + tag,
+                                    },
+                                    h(GlyphIcon, { name: 'tag', size: 11 }),
+                                    tag,
+                                  ),
+                                ),
+                              )
+                            : null,
                           commit.webUrl
                             ? h(
                                 'a',
@@ -1790,6 +1827,7 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
                             : h('span', { className: 'gl-commit-sha', title: commit.id }, commit.shortId),
                         ),
                       ),
+                    ),
                     ),
                   ),
                   commits.hasMore

@@ -379,7 +379,29 @@ export function apply(ctx, config = {}) {
       if (!client.configured) return json(res, 200, { ok: true, configured: false, commits: [] });
       const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
       const key = `commits:${projectId}:${kind}:${ref}:${page}`;
-      const load = () => client.commits(projectId, ref, { perPage: 30, page });
+      const load = async () => {
+        const result = await client.commits(projectId, ref, { perPage: 30, page });
+        // Tag pills in the list need to know which tags point at which commit.
+        let tagMap = {};
+        try {
+          tagMap = await cached('tagmap:' + projectId, cacheTtl, async () => {
+            const { tags } = await client.tags(projectId);
+            const map = Object.create(null);
+            for (const tag of tags) {
+              const id = tag.commit && tag.commit.id;
+              if (!id) continue;
+              (map[id] || (map[id] = [])).push(tag.name);
+            }
+            return map;
+          });
+        } catch (error) {
+          tagMap = {};
+        }
+        return {
+          items: result.items.map((commit) => Object.assign({}, commit, { tags: tagMap[commit.id] || [] })),
+          hasMore: result.hasMore,
+        };
+      };
       const result = fresh ? await load() : await cached(key, cacheTtl, load);
       if (fresh) putCache(key, result);
       return json(res, 200, {
