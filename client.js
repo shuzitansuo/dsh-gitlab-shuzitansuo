@@ -126,6 +126,7 @@ window.__ModuleLoader__.load({
     const EVENT_FILTERS = [
       { key: 'all', label: '全部' },
       { key: 'push', label: '推送事件' },
+      { key: 'merge', label: '合并事件' },
     ];
 
     const ACTION_LABELS = {
@@ -1685,7 +1686,11 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
                 ? h(
                     'div',
                     { className: 'gl-empty' },
-                    eventFilter === 'push' ? '这个项目还没有推送事件' : '这个项目还没有相关活动',
+                    eventFilter === 'push'
+                      ? '这个项目还没有推送事件'
+                      : eventFilter === 'merge'
+                        ? '这个项目还没有合并事件'
+                        : '这个项目还没有相关活动',
                   )
                 : h(
                     'div',
