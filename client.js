@@ -510,7 +510,8 @@ body[data-ds-dark-theme] .gl-root{
 .gl-subtab-active{color:var(--td-brand-color);font-weight:500}
 .gl-subtab-active:after{content:'';position:absolute;left:8px;right:8px;bottom:0;height:2px;border-radius:2px 2px 0 0;background:var(--td-brand-color)}
 .gl-events{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;overflow:auto}
-.gl-event{display:flex;align-items:flex-start;gap:10px;padding:10px 30px 10px 44px;border-bottom:0;min-width:0}
+.gl-event{position:relative;display:flex;align-items:flex-start;gap:10px;padding:10px 30px 12px 44px;border-bottom:0;min-width:0}
+.gl-event:after{content:'';position:absolute;left:44px;right:16px;bottom:0;height:1px;background:var(--td-component-stroke);opacity:.55}
 .gl-event:hover{background:var(--td-bg-color-container-hover)}
 .gl-avatar{display:inline-flex;align-items:center;justify-content:center;flex:0 0 22px;width:22px;height:22px;margin-top:1px;border-radius:50%;color:#fff;font-size:11px;line-height:1;font-weight:600;user-select:none}
 .gl-more{display:flex;justify-content:center;padding:12px 16px;flex:0 0 auto}
@@ -530,7 +531,8 @@ a.gl-event-detail:hover{color:var(--td-brand-color);text-decoration:underline}
 .gl-day-head:before{content:'';position:absolute;left:24px;top:0;bottom:0;width:1px;background:var(--td-component-stroke)}
 .gl-day-node{position:absolute;left:15px;top:50%;transform:translateY(-50%);z-index:1;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:var(--td-bg-color-container);color:var(--gl-icon)}
 .gl-day-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.gl-commit{display:flex;align-items:flex-start;gap:10px;padding:10px 30px 10px 44px;border-bottom:0;min-width:0}
+.gl-commit{position:relative;display:flex;align-items:flex-start;gap:10px;padding:10px 30px 12px 44px;border-bottom:0;min-width:0}
+.gl-commit:after{content:'';position:absolute;left:44px;right:16px;bottom:0;height:1px;background:var(--td-component-stroke);opacity:.55}
 .gl-commit-tags{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;margin-top:1px;max-width:200px;overflow:hidden}
 .gl-tag-pill{display:inline-flex;align-items:center;gap:3px;max-width:120px;height:20px;padding:0 7px;border-radius:10px;background:var(--td-bg-color-secondarycontainer);color:var(--td-text-color-secondary);font-size:11px;line-height:18px;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gl-tag-pill:hover{background:var(--td-brand-color-light);color:var(--td-brand-color)}
