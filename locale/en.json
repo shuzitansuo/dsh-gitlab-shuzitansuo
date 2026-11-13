@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "GitLab project workbench",
+    "description": "Browse GitLab projects inside DSH, expand a project to list its branches and tags, and inspect the recent commits of the selected ref on the right. The access token is entered in the panel and stored in the local credential store. The panel text is Chinese.",
+    "detail": "docs/DETAIL.md"
+  }
+}

@@ -1,0 +1,11 @@
+# GitLab 项目工作台：左侧项目树 + 分支/标签，右侧提交详情。
+# 令牌不写在这里：装好后在面板左上角「连接设置」里填一次，
+# Host 侧会存进凭据库（DSH_GITLAB_TOKEN），没有凭据库时落到 ~/.dsh/gitlab/settings.json（0600）。
+- insert:
+    - id: gitlab-workbench
+      name: '@local/dsh-gitlab'
+      config:
+        # GitLab 实例地址，不要带结尾斜杠（装好后也可以在面板里改）
+        baseUrl: 'https://gitlab.example.com'
+        # 项目列表缓存时长（毫秒），面板里的刷新按钮会绕过缓存
+        cacheTtlMs: 30000

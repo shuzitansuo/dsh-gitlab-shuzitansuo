@@ -1,0 +1,32 @@
+{
+  "name": "@local/dsh-gitlab",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "GitLab 项目工作台：左侧项目树可展开分支与标签，右侧查看引用详情与提交记录",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "lib/*.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "docs",
+    "icon.svg",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  }
+}

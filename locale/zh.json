@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "GitLab 项目工作台",
+    "description": "在 DSH 里浏览 GitLab 项目，展开查看每个项目的分支与标签，并在右侧查看对应引用的最近提交。令牌在面板内填写，保存到本机凭据库。",
+    "detail": "docs/DETAIL.md"
+  }
+}
