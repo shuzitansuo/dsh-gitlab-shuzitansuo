@@ -867,6 +867,10 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
             prev && list.some((project) => project.id === prev) ? prev : list[0] ? list[0].id : 0,
           );
           setPhase('ready');
+          // The row counter is "branches + tags", which needs the refs fetched.
+          // Pull the first screenful in the background (four at a time) so every
+          // visible project shows its number without waiting for a click.
+          ensureManyRefs(list.slice(0, 12).map((project) => project.id));
         } catch (error) {
           if (!aliveRef.current) return;
           setProjectsError(error?.message || String(error));
