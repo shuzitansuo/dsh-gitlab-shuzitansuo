@@ -198,6 +198,42 @@ window.__ModuleLoader__.load({
       };
     }
 
+    function pad2(value) {
+      return String(value).padStart(2, '0');
+    }
+
+    function localDayKey(iso) {
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return 'unknown';
+      return date.getFullYear() + '-' + pad2(date.getMonth() + 1) + '-' + pad2(date.getDate());
+    }
+
+    function formatDayHeader(iso) {
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return '未知日期';
+      const day = localDayKey(iso);
+      const today = localDayKey(new Date().toISOString());
+      const yesterday = localDayKey(new Date(Date.now() - 86400000).toISOString());
+      const label = date.getFullYear() + '年' + (date.getMonth() + 1) + '月' + date.getDate() + '日';
+      if (day === today) return '今天 · ' + label;
+      if (day === yesterday) return '昨天 · ' + label;
+      return label;
+    }
+
+    function groupCommitsByDay(items) {
+      const groups = [];
+      let current = null;
+      for (const commit of items) {
+        const key = localDayKey(commit.committedDate);
+        if (!current || current.key !== key) {
+          current = { key, label: formatDayHeader(commit.committedDate), items: [] };
+          groups.push(current);
+        }
+        current.items.push(commit);
+      }
+      return groups;
+    }
+
     function encodeRefPath(name) {
       return String(name || '')
         .split('/')
@@ -477,6 +513,8 @@ body[data-ds-dark-theme] .gl-root{
 .gl-event-detail{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--td-font-family-code);font-size:12px;color:var(--td-text-color-secondary);text-decoration:none}
 a.gl-event-detail:hover{color:var(--td-brand-color);text-decoration:underline}
 .gl-event-time{flex:0 0 auto;white-space:nowrap}
+.gl-day{display:flex;flex-direction:column;min-width:0}
+.gl-day-head{position:sticky;top:0;z-index:1;padding:8px 16px;background:var(--td-bg-color-container);font:var(--td-font-body-small);font-weight:600;color:var(--td-text-color-secondary);border-bottom:1px solid var(--td-component-stroke)}
 .gl-commit{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-bottom:1px solid var(--td-component-stroke);min-width:0}
 .gl-commit:hover{background:var(--td-bg-color-container-hover)}
 .gl-commit-sha{flex:0 0 auto;margin-top:1px;padding:0 5px;border-radius:3px;background:var(--td-bg-color-secondarycontainer);color:var(--td-text-color-secondary);font:var(--td-font-body-small);font-family:var(--td-font-family-code);text-decoration:none;line-height:18px}
@@ -1709,41 +1747,67 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
             items.length === 0
               ? h('div', { className: 'gl-empty' }, '这条引用还没有提交')
               : [
-                ...items.map((commit) =>
-                  h(
-                    'div',
-                    { key: commit.id || commit.shortId, className: 'gl-commit' },
-                    commit.webUrl
-                      ? h('a', { className: 'gl-commit-sha', href: commit.webUrl, target: '_blank', rel: 'noreferrer noopener', title: commit.id }, commit.shortId)
-                      : h('span', { className: 'gl-commit-sha', title: commit.id }, commit.shortId),
+                  ...groupCommitsByDay(items).map((group) =>
                     h(
                       'div',
-                      { className: 'gl-commit-main' },
-                      h('div', { className: 'gl-commit-title', title: commit.title }, commit.title),
-                      h(
-                        'div',
-                        { className: 'gl-commit-meta' },
-                        (commit.authorName || '未知作者') + ' · ' + formatTime(commit.committedDate),
+                      { key: 'day-' + group.key, className: 'gl-day' },
+                      h('div', { className: 'gl-day-head' }, group.label),
+                      group.items.map((commit) =>
+                        h(
+                          'div',
+                          { key: commit.id || commit.shortId, className: 'gl-commit' },
+                          h(
+                            'span',
+                            {
+                              className: 'gl-avatar',
+                              style: { background: avatarColor(commit.authorName || '?') },
+                              'aria-hidden': true,
+                            },
+                            String(commit.authorName || '?').slice(0, 1).toUpperCase(),
+                          ),
+                          h(
+                            'div',
+                            { className: 'gl-commit-main' },
+                            h('div', { className: 'gl-commit-title', title: commit.title }, commit.title),
+                            h(
+                              'div',
+                              { className: 'gl-commit-meta' },
+                              (commit.authorName || '未知作者') + ' · ' + formatTime(commit.committedDate),
+                            ),
+                          ),
+                          commit.webUrl
+                            ? h(
+                                'a',
+                                {
+                                  className: 'gl-commit-sha',
+                                  href: commit.webUrl,
+                                  target: '_blank',
+                                  rel: 'noreferrer noopener',
+                                  title: commit.id,
+                                },
+                                commit.shortId,
+                              )
+                            : h('span', { className: 'gl-commit-sha', title: commit.id }, commit.shortId),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                commits.hasMore
-                  ? h(
-                      'div',
-                      { className: 'gl-more' },
-                      h(
-                        'button',
-                        {
-                          className: 'gl-btn',
-                          disabled: commits.status === 'more',
-                          onClick: () =>
-                            loadCommits(selection.projectId, selection.kind, selection.name, false, commits.page + 1),
-                        },
-                        commits.status === 'more' ? '加载中…' : '加载更多',
-                      ),
-                    )
-                  : null,
+                  commits.hasMore
+                    ? h(
+                        'div',
+                        { className: 'gl-more' },
+                        h(
+                          'button',
+                          {
+                            className: 'gl-btn',
+                            disabled: commits.status === 'more',
+                            onClick: () =>
+                              loadCommits(selection.projectId, selection.kind, selection.name, false, commits.page + 1),
+                          },
+                          commits.status === 'more' ? '加载中…' : '加载更多',
+                        ),
+                      )
+                    : null,
                 ],
           ),
         );
