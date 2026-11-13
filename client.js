@@ -124,8 +124,8 @@ window.__ModuleLoader__.load({
     }
 
     const EVENT_FILTERS = [
-      { key: 'all', label: 'All' },
-      { key: 'push', label: 'Push events' },
+      { key: 'all', label: '全部' },
+      { key: 'push', label: '推送事件' },
     ];
 
     const ACTION_LABELS = {
@@ -220,16 +220,17 @@ window.__ModuleLoader__.load({
       return label;
     }
 
-    function groupCommitsByDay(items) {
+    function groupByDay(items, pickDate) {
       const groups = [];
       let current = null;
-      for (const commit of items) {
-        const key = localDayKey(commit.committedDate);
+      for (const item of items) {
+        const iso = pickDate(item);
+        const key = localDayKey(iso);
         if (!current || current.key !== key) {
-          current = { key, label: formatDayHeader(commit.committedDate), items: [] };
+          current = { key, label: formatDayHeader(iso), items: [] };
           groups.push(current);
         }
-        current.items.push(commit);
+        current.items.push(item);
       }
       return groups;
     }
@@ -509,7 +510,7 @@ body[data-ds-dark-theme] .gl-root{
 .gl-subtab-active{color:var(--td-brand-color);font-weight:500}
 .gl-subtab-active:after{content:'';position:absolute;left:8px;right:8px;bottom:0;height:2px;border-radius:2px 2px 0 0;background:var(--td-brand-color)}
 .gl-events{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;overflow:auto}
-.gl-event{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-bottom:1px solid var(--td-component-stroke);min-width:0}
+.gl-event{display:flex;align-items:flex-start;gap:10px;padding:10px 30px 10px 44px;border-bottom:0;min-width:0}
 .gl-event:hover{background:var(--td-bg-color-container-hover)}
 .gl-avatar{display:inline-flex;align-items:center;justify-content:center;flex:0 0 22px;width:22px;height:22px;margin-top:1px;border-radius:50%;color:#fff;font-size:11px;line-height:1;font-weight:600;user-select:none}
 .gl-more{display:flex;justify-content:center;padding:12px 16px;flex:0 0 auto}
@@ -1678,12 +1679,28 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
                 ? h(
                     'div',
                     { className: 'gl-empty' },
-                    eventFilter === 'push' ? '这个项目还没有 Push 事件' : '这个项目还没有相关活动',
+                    eventFilter === 'push' ? '这个项目还没有推送事件' : '这个项目还没有相关活动',
                   )
                 : h(
                     'div',
                     { className: 'gl-events' },
-                    list.map((item) => renderEventRow(activityProject, item)),
+                    h(
+                      'div',
+                      { className: 'gl-timeline' },
+                      groupByDay(list, (item) => item.createdAt).map((group) =>
+                        h(
+                          'div',
+                          { key: 'day-' + group.key, className: 'gl-day' },
+                          h(
+                            'div',
+                            { className: 'gl-day-head' },
+                            h('span', { className: 'gl-day-node' }, h(GlyphIcon, { name: 'commit', size: 14 })),
+                            h('span', { className: 'gl-day-label' }, group.label),
+                          ),
+                          group.items.map((item) => renderEventRow(activityProject, item)),
+                        ),
+                      ),
+                    ),
                     events.hasMore
                       ? h(
                           'div',
@@ -1782,7 +1799,7 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
                   h(
                     'div',
                     { key: 'timeline', className: 'gl-timeline' },
-                    groupCommitsByDay(items).map((group) =>
+                    groupByDay(items, (commit) => commit.committedDate).map((group) =>
                     h(
                       'div',
                       { key: 'day-' + group.key, className: 'gl-day' },
