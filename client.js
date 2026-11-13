@@ -520,7 +520,7 @@ a.gl-event-detail:hover{color:var(--td-brand-color);text-decoration:underline}
 .gl-day-head:before{content:'';position:absolute;left:24px;top:0;bottom:0;width:1px;background:var(--td-component-stroke)}
 .gl-day-node{position:absolute;left:15px;top:50%;transform:translateY(-50%);z-index:1;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:var(--td-bg-color-container);color:var(--gl-icon)}
 .gl-day-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.gl-commit{display:flex;align-items:flex-start;gap:10px;padding:10px 16px 10px 44px;border-bottom:1px solid var(--td-component-stroke);min-width:0}
+.gl-commit{display:flex;align-items:flex-start;gap:10px;padding:10px 16px 10px 44px;border-bottom:0;min-width:0}
 .gl-commit-tags{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;margin-top:1px;max-width:200px;overflow:hidden}
 .gl-tag-pill{display:inline-flex;align-items:center;gap:3px;max-width:120px;height:20px;padding:0 7px;border-radius:10px;background:var(--td-bg-color-secondarycontainer);color:var(--td-text-color-secondary);font-size:11px;line-height:18px;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gl-tag-pill:hover{background:var(--td-brand-color-light);color:var(--td-brand-color)}
