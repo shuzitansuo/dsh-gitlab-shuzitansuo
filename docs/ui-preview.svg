@@ -1,0 +1,214 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 700" width="1180" height="700" role="img" aria-label="GitLab 项目工作台界面示意图（非实拍）">
+  <defs>
+    <clipPath id="panel"><rect width="1180" height="700" rx="12"/></clipPath>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3f3f3"/>
+      <stop offset="1" stop-color="#f7f7f7"/>
+    </linearGradient>
+  </defs>
+  <g clip-path="url(#panel)" font-family="-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif">
+    <rect width="1180" height="700" fill="#ffffff"/>
+
+    <!-- ═══ 左栏 ═══ -->
+    <rect width="300" height="700" fill="url(#fade)"/>
+    <line x1="300.5" y1="0" x2="300.5" y2="700" stroke="#e8e8e8"/>
+
+    <!-- 左栏标题 -->
+    <text x="16" y="30" font-size="14" font-weight="600" fill="rgba(0,0,0,.9)">GitLab</text>
+    <g stroke="#666666" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M203.2 24a5.2 5.2 0 1 1-1.6-3.75M203.2 18.6v3.2H200"/>
+      <path d="M186.6 27.4a2.6 2.6 0 0 0 3.7 0l2-2a2.6 2.6 0 0 0-3.7-3.7l-1 1M189.4 24.6a2.6 2.6 0 0 0-3.7 0l-2 2a2.6 2.6 0 0 0 3.7 3.7l1-1"/>
+      <path d="M266.5 19.5 262 24l4.5 4.5"/>
+    </g>
+    <line x1="0" y1="48.5" x2="300" y2="48.5" stroke="#e8e8e8"/>
+
+    <!-- 搜索行 -->
+    <g stroke="#888888" stroke-width="1.3" fill="none" stroke-linecap="round">
+      <circle cx="23" cy="63" r="5.4"/>
+      <path d="M26.9 66.9 30 70"/>
+    </g>
+    <text x="40" y="68" font-size="13" fill="rgba(0,0,0,.4)">筛选已加载项目</text>
+    <line x1="0" y1="78.5" x2="300" y2="78.5" stroke="#e8e8e8"/>
+
+    <!-- 列表头 -->
+    <text x="16" y="97" font-size="12" fill="rgba(0,0,0,.4)">项目</text>
+    <g stroke="#0052d9" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M52 95V86M48.4 89.6 52 86l3.6 3.6"/>
+    </g>
+    <g stroke="#8c8c8c" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M232 92.2 236 88l4 4.2M232 96.2 236 100.4l4-4.2"/>
+    </g>
+    <text x="284" y="97" font-size="12" fill="rgba(0,0,0,.4)" text-anchor="end">共 4 个</text>
+
+    <!-- 项目 1（当前选中） -->
+    <rect x="8" y="106" width="284" height="34" rx="6" fill="rgba(0,0,0,.06)"/>
+    <g stroke="#0052d9" stroke-width="1.4" fill="none" stroke-linejoin="round">
+      <path d="M20 118.2a1.6 1.6 0 0 1 1.6-1.6h2.6l1.5 1.7h4.7a1.6 1.6 0 0 1 1.6 1.6v5.5a1.6 1.6 0 0 1-1.6 1.6h-8.8a1.6 1.6 0 0 1-1.6-1.6z"/>
+    </g>
+    <text x="42" y="127" font-size="13" font-weight="500" fill="rgba(0,0,0,.9)">acme/web-app</text>
+    <text x="266" y="127" font-size="12" fill="rgba(0,0,0,.4)" text-anchor="middle">2</text>
+
+    <!-- 分支组 -->
+    <g stroke="#666666" stroke-width="1.3" fill="none" stroke-linecap="round">
+      <path d="M38 152v5.6M38 155.4c0-2 1.6-3.4 3.6-3.4h1.6"/>
+      <circle cx="38" cy="150.6" r="1.5" fill="#666666" stroke="none"/>
+      <circle cx="38" cy="159.4" r="1.5" fill="#666666" stroke="none"/>
+      <circle cx="44.4" cy="152" r="1.5" fill="#666666" stroke="none"/>
+    </g>
+    <text x="60" y="160" font-size="13" font-weight="500" fill="rgba(0,0,0,.9)">分支</text>
+    <rect x="248" y="146" width="36" height="20" rx="3" fill="rgba(0,0,0,.06)"/>
+    <text x="266" y="160" font-size="12" fill="rgba(0,0,0,.6)" text-anchor="middle">1</text>
+
+    <!-- main -->
+    <g stroke="#666666" stroke-width="1.3" fill="none" stroke-linecap="round">
+      <path d="M54 186v5.6M54 189.4c0-2 1.6-3.4 3.6-3.4h1.6"/>
+      <circle cx="54" cy="184.6" r="1.5" fill="#666666" stroke="none"/>
+      <circle cx="54" cy="193.4" r="1.5" fill="#666666" stroke="none"/>
+      <circle cx="60.4" cy="186" r="1.5" fill="#666666" stroke="none"/>
+    </g>
+    <text x="76" y="194" font-size="13" fill="rgba(0,0,0,.6)">main</text>
+    <rect x="248" y="180" width="36" height="20" rx="3" fill="#f2f3ff"/>
+    <text x="266" y="194" font-size="11" fill="#0052d9" text-anchor="middle">默认</text>
+
+    <!-- Tag 组 -->
+    <g stroke="#666666" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M35.6 218.4v-4.2a.6.6 0 0 1 .6-.6h4.2l6 6-4.8 4.8z"/>
+      <circle cx="38.4" cy="216.4" r="1.1" fill="#666666" stroke="none"/>
+    </g>
+    <text x="60" y="227" font-size="13" font-weight="500" fill="rgba(0,0,0,.9)">Tag</text>
+    <rect x="248" y="213" width="36" height="20" rx="3" fill="rgba(0,0,0,.06)"/>
+    <text x="266" y="227" font-size="12" fill="rgba(0,0,0,.6)" text-anchor="middle">1</text>
+
+    <!-- v1.2.0 -->
+    <g stroke="#666666" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M51.6 253.4v-4.2a.6.6 0 0 1 .6-.6h4.2l6 6-4.8 4.8z"/>
+      <circle cx="54.4" cy="251.4" r="1.1" fill="#666666" stroke="none"/>
+    </g>
+    <text x="76" y="262" font-size="13" fill="rgba(0,0,0,.6)">v1.2.0</text>
+
+    <!-- 项目 2 -->
+    <g stroke="#666666" stroke-width="1.4" fill="none" stroke-linejoin="round">
+      <path d="M20 286.2a1.6 1.6 0 0 1 1.6-1.6h2.6l1.5 1.7h4.7a1.6 1.6 0 0 1 1.6 1.6v5.5a1.6 1.6 0 0 1-1.6 1.6h-8.8a1.6 1.6 0 0 1-1.6-1.6z"/>
+    </g>
+    <text x="42" y="295" font-size="13" font-weight="500" fill="rgba(0,0,0,.9)">acme/api-server</text>
+    <text x="266" y="295" font-size="12" fill="rgba(0,0,0,.4)" text-anchor="middle">1</text>
+
+    <!-- 项目 3 -->
+    <g stroke="#666666" stroke-width="1.4" fill="none" stroke-linejoin="round">
+      <path d="M20 320.2a1.6 1.6 0 0 1 1.6-1.6h2.6l1.5 1.7h4.7a1.6 1.6 0 0 1 1.6 1.6v5.5a1.6 1.6 0 0 1-1.6 1.6h-8.8a1.6 1.6 0 0 1-1.6-1.6z"/>
+    </g>
+    <text x="42" y="329" font-size="13" font-weight="500" fill="rgba(0,0,0,.9)">acme/deploy</text>
+    <text x="266" y="329" font-size="12" fill="rgba(0,0,0,.4)" text-anchor="middle">2</text>
+
+    <!-- 项目 4 -->
+    <g stroke="#666666" stroke-width="1.4" fill="none" stroke-linejoin="round">
+      <path d="M20 354.2a1.6 1.6 0 0 1 1.6-1.6h2.6l1.5 1.7h4.7a1.6 1.6 0 0 1 1.6 1.6v5.5a1.6 1.6 0 0 1-1.6 1.6h-8.8a1.6 1.6 0 0 1-1.6-1.6z"/>
+    </g>
+    <text x="42" y="363" font-size="13" font-weight="500" fill="rgba(0,0,0,.9)">acme/docs</text>
+    <text x="266" y="363" font-size="12" fill="rgba(0,0,0,.4)" text-anchor="middle">0</text>
+
+    <!-- 底栏 -->
+    <line x1="0" y1="667.5" x2="300" y2="667.5" stroke="#e8e8e8"/>
+    <text x="16" y="687" font-size="11" fill="rgba(0,0,0,.4)">GitLab 工作台 v0.3.0 · @alice</text>
+    <text x="284" y="687" font-size="11" fill="rgba(0,0,0,.4)" text-anchor="end">检查更新</text>
+
+    <!-- ═══ 右栏 ═══ -->
+    <line x1="0" y1="48.5" x2="1180" y2="48.5" stroke="#e8e8e8"/>
+    <text x="316" y="30" font-size="12" fill="rgba(0,0,0,.6)">acme/web-app</text>
+    <text x="410" y="30" font-size="12" fill="rgba(0,0,0,.4)">/</text>
+    <text x="424" y="30" font-size="14" font-weight="600" fill="rgba(0,0,0,.9)">活动</text>
+
+    <!-- 铃铛 + 动作 -->
+    <g stroke="#666666" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1044 26.4a4 4 0 0 0-4 4v2.2l-1.2 1.4h10.4l-1.2-1.4v-2.2a4 4 0 0 0-4-4Z"/>
+      <path d="M1042.3 36a1.8 1.8 0 0 0 3.4 0"/>
+    </g>
+    <circle cx="1055" cy="18" r="6.5" fill="#d54941"/>
+    <text x="1055" y="21.5" font-size="9" fill="#ffffff" text-anchor="middle" font-weight="600">3</text>
+    <text x="1124" y="30" font-size="12" fill="rgba(0,0,0,.6)" text-anchor="end">在 GitLab 打开</text>
+    <g stroke="#666666" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1148.2 24a5.2 5.2 0 1 1-1.6-3.75M1148.2 18.6v3.2H1145"/>
+    </g>
+
+    <!-- 活动筛选标签 -->
+    <text x="316" y="76" font-size="14" font-weight="500" fill="#0052d9">全部</text>
+    <rect x="308" y="83" width="34" height="2" rx="1" fill="#0052d9"/>
+    <text x="378" y="76" font-size="14" fill="rgba(0,0,0,.6)">推送事件</text>
+    <text x="466" y="76" font-size="14" fill="rgba(0,0,0,.6)">合并事件</text>
+    <line x1="0" y1="86.5" x2="1180" y2="86.5" stroke="#e8e8e8"/>
+
+    <!-- 时序竖线 -->
+    <line x1="324.5" y1="104" x2="324.5" y2="640" stroke="#e8e8e8"/>
+
+    <!-- 日期组 1 -->
+    <rect x="306" y="86" width="874" height="36" fill="#ffffff"/>
+    <rect x="315" y="103" width="19" height="19" rx="9.5" fill="#ffffff"/>
+    <g stroke="#666666" stroke-width="1.3" fill="none" stroke-linecap="round">
+      <path d="M312 112.5h0.01"/>
+      <line x1="316" y1="112.5" x2="320" y2="112.5"/>
+      <line x1="328" y1="112.5" x2="332" y2="112.5"/>
+      <circle cx="324" cy="112.5" r="2.4" fill="#666666" stroke="none"/>
+    </g>
+    <text x="344" y="117" font-size="12" font-weight="600" fill="rgba(0,0,0,.6)">今天 · 2026年11月13日</text>
+
+    <!-- 活动 1 -->
+    <circle cx="355" cy="150" r="11" fill="#3f7ff0"/>
+    <text x="355" y="154" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">A</text>
+    <text x="378" y="146" font-size="13" font-weight="500" fill="rgba(0,0,0,.9)">alice</text>
+    <text x="418" y="146" font-size="13" fill="rgba(0,0,0,.6)">推送到</text>
+    <text x="470" y="146" font-size="13" fill="#0052d9" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">Tag v1.2.0</text>
+    <text x="378" y="164" font-size="12" fill="rgba(0,0,0,.6)" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">9380472c · chore: add Kubernetes manifests · 3 小时前</text>
+    <line x1="344" y1="185.5" x2="1164" y2="185.5" stroke="#e8e8e8" opacity="0.55"/>
+
+    <!-- 活动 2 -->
+    <circle cx="355" cy="214" r="11" fill="#22b07d"/>
+    <text x="355" y="218" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">B</text>
+    <text x="378" y="210" font-size="13" font-weight="500" fill="rgba(0,0,0,.9)">bob</text>
+    <text x="408" y="210" font-size="13" fill="rgba(0,0,0,.6)">推送到</text>
+    <text x="460" y="210" font-size="13" fill="#0052d9" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">分支 main</text>
+    <text x="378" y="228" font-size="12" fill="rgba(0,0,0,.6)" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">7af84f37 · fix: guard the empty branch list · 5 小时前</text>
+    <line x1="344" y1="249.5" x2="1164" y2="249.5" stroke="#e8e8e8" opacity="0.55"/>
+
+    <!-- 活动 3 -->
+    <circle cx="355" cy="278" r="11" fill="#8f6bff"/>
+    <text x="355" y="282" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">A</text>
+    <text x="378" y="274" font-size="13" font-weight="500" fill="rgba(0,0,0,.9)">alice</text>
+    <text x="418" y="274" font-size="13" fill="rgba(0,0,0,.6)">合并了</text>
+    <text x="466" y="274" font-size="13" fill="#0052d9" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">!12</text>
+    <text x="378" y="292" font-size="12" fill="rgba(0,0,0,.6)" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">fix: guard the empty branch list · 6 小时前</text>
+
+    <!-- 日期组 2 -->
+    <rect x="306" y="314" width="874" height="36" fill="#ffffff"/>
+    <rect x="315" y="331" width="19" height="19" rx="9.5" fill="#ffffff"/>
+    <g stroke="#666666" stroke-width="1.3" fill="none" stroke-linecap="round">
+      <line x1="316" y1="340.5" x2="320" y2="340.5"/>
+      <line x1="328" y1="340.5" x2="332" y2="340.5"/>
+      <circle cx="324" cy="340.5" r="2.4" fill="#666666" stroke="none"/>
+    </g>
+    <text x="344" y="345" font-size="12" font-weight="600" fill="rgba(0,0,0,.6)">昨天 · 2026年11月12日</text>
+
+    <!-- 活动 4 -->
+    <circle cx="355" cy="378" r="11" fill="#f5a524"/>
+    <text x="355" y="382" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">C</text>
+    <text x="378" y="374" font-size="13" font-weight="500" fill="rgba(0,0,0,.9)">carol</text>
+    <text x="418" y="374" font-size="13" fill="rgba(0,0,0,.6)">推送到</text>
+    <text x="470" y="374" font-size="13" fill="#0052d9" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">Tag v1.1.0</text>
+    <text x="378" y="392" font-size="12" fill="rgba(0,0,0,.6)" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">5d0388f8 · chore: ignore local dev files · 1 天前</text>
+    <line x1="344" y1="413.5" x2="1164" y2="413.5" stroke="#e8e8e8" opacity="0.55"/>
+
+    <!-- 活动 5 -->
+    <circle cx="355" cy="442" r="11" fill="#19b5c9"/>
+    <text x="355" y="446" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">D</text>
+    <text x="378" y="438" font-size="13" font-weight="500" fill="rgba(0,0,0,.9)">dave</text>
+    <text x="414" y="438" font-size="13" fill="rgba(0,0,0,.6)">推送到</text>
+    <text x="466" y="438" font-size="13" fill="#0052d9" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">分支 main</text>
+    <text x="378" y="456" font-size="12" fill="rgba(0,0,0,.6)" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">335b923a · chore: tidy the deploy scripts · 1 天前</text>
+
+    <!-- 加载更多 -->
+    <rect x="690" y="490" width="96" height="32" rx="6" fill="#ffffff" stroke="#dddddd"/>
+    <text x="738" y="511" font-size="13" fill="rgba(0,0,0,.9)" text-anchor="middle">加载更多</text>
+
+    <!-- 示意图标注 -->
+    <text x="1164" y="684" font-size="11" fill="rgba(0,0,0,.28)" text-anchor="end">示意图 · 非实拍截图</text>
+  </g>
+</svg>
