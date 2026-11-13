@@ -247,6 +247,8 @@ window.__ModuleLoader__.load({
       'chevron-down': { paths: ['M3.5 6 8 10.5 12.5 6'] },
       'chevron-left': { paths: ['M10.5 3.5 6 8 10.5 12.5'] },
       'expand-all': { paths: ['M3.8 6.2 8 2.6 12.2 6.2', 'M3.8 9.8 8 13.4 12.2 9.8'] },
+      'arrow-up': { paths: ['M8 12.6V3.6', 'M4.4 7.2 8 3.6 11.6 7.2'] },
+      'arrow-down': { paths: ['M8 3.4v9', 'M4.4 8.8 8 12.4 11.6 8.8'] },
       'collapse-all': { paths: ['M3.8 2.6 8 6.2 12.2 2.6', 'M3.8 13.4 8 9.8 12.2 13.4'] },
       refresh: { paths: ['M13.2 8a5.2 5.2 0 1 1-1.6-3.75', 'M13.2 2.6v3.2H10'] },
       search: {
@@ -374,7 +376,14 @@ body[data-ds-dark-theme] .gl-root{
 .gl-tree{overflow:auto;flex:1 1 auto;min-height:0;padding:6px 8px 10px;scrollbar-width:thin}
 .gl-tree-head{display:flex;align-items:center;gap:8px;flex:0 0 auto;height:28px;padding:0 16px;color:var(--td-text-color-placeholder);font-size:12px;line-height:20px}
 .gl-tree-head-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.gl-tree-head-count{margin-left:auto;white-space:nowrap}
+.gl-tree-head-btn{display:inline-flex;align-items:center;gap:4px;min-width:0;padding:0;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer}
+.gl-tree-head-btn:hover{color:var(--td-text-color-primary)}
+.gl-tree-head-btn:focus-visible{outline:2px solid var(--td-brand-color-focus);outline-offset:2px}
+.gl-tree-head-active{color:var(--td-text-color-secondary)}
+.gl-tree-head-arrow{display:inline-flex;color:var(--gl-icon-brand)}
+.gl-tree-head-spacer{flex:1 1 auto}
+.gl-icon-btn-sm{width:24px;height:24px}
+.gl-tree-head-count{white-space:nowrap}
 .gl-tree::-webkit-scrollbar,.gl-commits::-webkit-scrollbar{width:6px;height:6px}
 .gl-tree::-webkit-scrollbar-thumb,.gl-commits::-webkit-scrollbar-thumb{background:var(--td-scrollbar-color);border-radius:11px}
 .gl-tree::-webkit-scrollbar-thumb:hover,.gl-commits::-webkit-scrollbar-thumb:hover{background:var(--td-scrollbar-hover-color)}
@@ -566,7 +575,7 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
 `;
 
     function loadView() {
-      const fallback = { viewMode: 'activity', activeProjectId: 0, eventFilter: 'all', openProjects: {} };
+      const fallback = { viewMode: 'activity', activeProjectId: 0, eventFilter: 'all', openProjects: {}, sortDir: 0 };
       try {
         const saved = JSON.parse(localStorage.getItem(VIEW_KEY) || 'null');
         if (!saved || typeof saved !== 'object') return fallback;
@@ -576,6 +585,7 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
           eventFilter: saved.eventFilter === 'push' ? 'push' : 'all',
           openProjects:
             saved.openProjects && typeof saved.openProjects === 'object' ? saved.openProjects : {},
+          sortDir: Number(saved.sortDir) === 1 || Number(saved.sortDir) === -1 ? Number(saved.sortDir) : 0,
         };
       } catch (error) {
         return fallback;
@@ -745,6 +755,7 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
       const [projectsTruncated, setProjectsTruncated] = useState(false);
       const [query, setQuery] = useState('');
       const [openProjects, setOpenProjects] = useState(savedView.openProjects);
+      const [sortDir, setSortDir] = useState(savedView.sortDir);
       const [refs, setRefs] = useState({});
       const [openGroups, setOpenGroups] = useState({});
       const [selection, setSelection] = useState(null);
@@ -790,12 +801,12 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
         try {
           localStorage.setItem(
             VIEW_KEY,
-            JSON.stringify({ viewMode, activeProjectId, eventFilter, openProjects }),
+            JSON.stringify({ viewMode, activeProjectId, eventFilter, openProjects, sortDir }),
           );
         } catch (error) {
           /* storage may be unavailable */
         }
-      }, [viewMode, activeProjectId, eventFilter, openProjects]);
+      }, [viewMode, activeProjectId, eventFilter, openProjects, sortDir]);
 
       // Keep the left column inside the panel; never squeeze the detail off screen.
       useEffect(() => {
@@ -926,6 +937,10 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
           setOpenProjects((prev) => Object.assign({}, prev, { [project.id]: true }));
           ensureRefs(project.id, false);
         }
+      }
+
+      function cycleSort() {
+        setSortDir((prev) => (prev === 0 ? 1 : prev === 1 ? -1 : 0));
       }
 
       function toggleAll() {
@@ -1352,6 +1367,15 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
         });
       })();
 
+      // 0 = newest activity (server order), 1 = name A→Z, -1 = name Z→A.
+      const sortedProjects = (() => {
+        if (!sortDir) return filtered;
+        const list = filtered.slice().sort((a, b) =>
+          String(a.name).localeCompare(String(b.name), 'zh-Hans-CN', { numeric: true, sensitivity: 'base' }),
+        );
+        return sortDir > 0 ? list : list.reverse();
+      })();
+
       const duplicateNames = (() => {
         const counts = new Map();
         for (const project of filtered) counts.set(project.name, (counts.get(project.name) || 0) + 1);
@@ -1431,7 +1455,7 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
             query ? '没有匹配的项目' : projectsBusy ? '加载项目…' : '你在 GitLab 上还没有可读项目',
           );
         }
-        return filtered.map((project) => renderProject(project));
+        return sortedProjects.map((project) => renderProject(project));
       };
 
       const renderProject = (project) => {
@@ -1878,12 +1902,6 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
                 h(
                   'div',
                   { className: 'gl-head-actions' },
-                  h(IconAction, {
-                    icon: allExpanded ? 'collapse-all' : 'expand-all',
-                    title: allExpanded ? '收起全部项目与分组' : '展开全部项目与分组',
-                    disabled: !filtered.length,
-                    onClick: toggleAll,
-                  }),
                   h(IconAction, { icon: 'refresh', title: '刷新项目与分支', busy: projectsBusy, onClick: refreshAll }),
                   h(IconAction, { icon: 'link', title: '连接设置', onClick: openDialog }),
                   h(IconAction, { icon: 'chevron-left', title: '收起左栏', onClick: () => setLayout((prev) => Object.assign({}, prev, { leftOpen: false })) }),
@@ -1913,7 +1931,39 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
                 ? h(
                     'div',
                     { className: 'gl-tree-head' },
-                    h('span', { className: 'gl-tree-head-label' }, '项目'),
+                    h(
+                      'button',
+                      {
+                        type: 'button',
+                        className: 'gl-tree-head-btn' + (sortDir ? ' gl-tree-head-active' : ''),
+                        title: sortDir
+                          ? '按名称' + (sortDir > 0 ? '正序' : '倒序') + '，点击切换'
+                          : '点击按名称排序',
+                        'aria-label': '按项目名称排序',
+                        onClick: cycleSort,
+                      },
+                      h('span', { className: 'gl-tree-head-label' }, '项目'),
+                      sortDir
+                        ? h(
+                            'span',
+                            { className: 'gl-tree-head-arrow' },
+                            h(GlyphIcon, { name: sortDir > 0 ? 'arrow-up' : 'arrow-down', size: 12 }),
+                          )
+                        : null,
+                    ),
+                    h('span', { className: 'gl-tree-head-spacer' }),
+                    h(
+                      'button',
+                      {
+                        type: 'button',
+                        className: 'gl-icon-btn gl-icon-btn-sm',
+                        title: allExpanded ? '收起全部项目与分组' : '展开全部项目与分组',
+                        'aria-label': allExpanded ? '收起全部' : '展开全部',
+                        disabled: !filtered.length,
+                        onClick: toggleAll,
+                      },
+                      h(GlyphIcon, { name: allExpanded ? 'collapse-all' : 'expand-all', size: 15 }),
+                    ),
                     h(
                       'span',
                       { className: 'gl-tree-head-count', title: projectsTruncated ? 'GitLab 只返回了最近活跃的前 200 个成员项目' : undefined },
