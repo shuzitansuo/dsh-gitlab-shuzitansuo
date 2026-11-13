@@ -407,8 +407,8 @@ body[data-ds-dark-theme] .gl-root{
 .gl-project:hover .gl-icon-folder{display:none}
 .gl-project:hover .gl-icon-caret{display:inline-flex}
 .gl-name{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:var(--td-font-body-medium)}
-.gl-meta{flex:0 0 auto;font-size:12px;line-height:20px;color:var(--td-text-color-placeholder);white-space:nowrap}
-.gl-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:var(--gl-radius);background:var(--td-bg-color-secondarycontainer);color:var(--td-text-color-secondary);font-size:12px;line-height:18px}
+.gl-meta{flex:0 0 auto;min-width:36px;text-align:center;font-size:12px;line-height:20px;color:var(--td-text-color-placeholder);white-space:nowrap}
+.gl-count{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-width:36px;height:20px;padding:0 6px;border-radius:var(--gl-radius);background:var(--td-bg-color-secondarycontainer);color:var(--td-text-color-secondary);font-size:12px;line-height:18px;text-align:center}
 .gl-children-wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .22s cubic-bezier(.4,0,.2,1)}
 .gl-children-wrap.gl-children-open{grid-template-rows:1fr}
 .gl-children{display:flex;flex-direction:column;gap:1px;margin:0;padding-left:26px;overflow:hidden;min-height:0;opacity:0;transition:opacity .18s ease}
@@ -426,7 +426,7 @@ body[data-ds-dark-theme] .gl-root{
 .gl-ref.gl-active{background:var(--dsw-alias-interactive-bg-active,rgba(0,0,0,.1))}
 .gl-ref.gl-active .gl-name{color:var(--td-text-color-primary);font-weight:500}
 .gl-ref.gl-active .gl-icon{color:var(--gl-icon-brand)}
-.gl-flag{flex:0 0 auto;padding:0 4px;border-radius:3px;background:var(--td-brand-color-light);color:var(--td-brand-color);font-size:11px;line-height:16px}
+.gl-flag{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-width:36px;padding:0 4px;border-radius:3px;background:var(--td-brand-color-light);color:var(--td-brand-color);font-size:11px;line-height:16px;text-align:center}
 .gl-muted .gl-name{color:var(--td-text-color-placeholder)}
 .gl-empty{padding:16px;color:var(--td-text-color-placeholder);text-align:center;font:var(--td-font-body-medium)}
 .gl-empty-sm{padding:4px 8px;text-align:left;font:var(--td-font-body-small)}
