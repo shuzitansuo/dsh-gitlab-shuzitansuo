@@ -68,4 +68,4 @@ Host 侧会先校验再写入，换地址时必须重新输入令牌，避免把
 
 ## 许可证
 
-[MIT](LICENSE) © 2026 mikizhu520
+[MIT](LICENSE) © 2026 shuzitansuo
