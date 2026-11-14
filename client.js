@@ -384,7 +384,7 @@ body[data-ds-dark-theme] .gl-root{
 .gl-tree-head-active{color:var(--td-text-color-secondary)}
 .gl-tree-head-arrow{display:inline-flex;color:var(--gl-icon-brand)}
 .gl-tree-head-spacer{flex:1 1 auto}
-.gl-icon-btn-sm{width:24px;height:24px}
+.gl-icon-btn-sm{width:20px;height:20px;border-radius:4px}
 .gl-tree-head-count{white-space:nowrap}
 .gl-tree::-webkit-scrollbar,.gl-commits::-webkit-scrollbar{width:6px;height:6px}
 .gl-tree::-webkit-scrollbar-thumb,.gl-commits::-webkit-scrollbar-thumb{background:var(--td-scrollbar-color);border-radius:11px}
@@ -1990,7 +1990,7 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
                         disabled: !filtered.length,
                         onClick: toggleAll,
                       },
-                      h(GlyphIcon, { name: allExpanded ? 'collapse-all' : 'expand-all', size: 15 }),
+                      h(GlyphIcon, { name: allExpanded ? 'collapse-all' : 'expand-all', size: 13 }),
                     ),
                     h(
                       'span',
