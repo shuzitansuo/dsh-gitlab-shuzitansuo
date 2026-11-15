@@ -275,6 +275,12 @@ window.__ModuleLoader__.load({
       external: {
         paths: ['M9.6 2.6h3.8v3.8', 'M13.4 2.6 8.2 7.8', 'M12.2 9.8v2.6a1.6 1.6 0 0 1-1.6 1.6H3.6A1.6 1.6 0 0 1 2 12.4V5.4a1.6 1.6 0 0 1 1.6-1.6h2.6'],
       },
+      edit: {
+        paths: [
+          'M10.6 3.1a1.6 1.6 0 0 1 2.3 2.3L5.2 13.1l-2.8.6.6-2.8z',
+          'M9.4 4.3 11.7 6.6',
+        ],
+      },
       bell: { paths: ['M8 2.4a4 4 0 0 0-4 4v2.2L2.8 11h10.4L12 8.6V6.4a4 4 0 0 0-4-4Z', 'M6.3 13a1.8 1.8 0 0 0 3.4 0'] },
       close: { paths: ['M4 4 12 12', 'M12 4 4 12'] },
       alert: { paths: ['M8 2.4 14 12.4H2Z', 'M8 6.4v2.8'], dots: [[8, 11, 0.9]] },
@@ -398,6 +404,11 @@ body[data-ds-dark-theme] .gl-root{
 .gl-project{font-weight:500}
 .gl-project-active{background:var(--dsw-alias-interactive-bg-active,rgba(0,0,0,.1))}
 .gl-project-active .gl-icon{color:var(--gl-icon-brand)}
+.gl-note{color:var(--td-text-color-placeholder);font-weight:400}
+.gl-note-input{flex:1 1 auto;min-width:0;height:24px;padding:0 6px;border:1px solid var(--td-brand-color);border-radius:4px;background:var(--td-bg-color-container);color:var(--td-text-color-primary);font:var(--td-font-body-medium);outline:none}
+.gl-edit-btn{opacity:0;pointer-events:none;transition:opacity .12s linear}
+.gl-project:hover .gl-edit-btn,.gl-project:focus-within .gl-edit-btn,.gl-edit-btn:focus-visible{opacity:1;pointer-events:auto}
+@media (prefers-reduced-motion:reduce){.gl-edit-btn{transition:none}}
 .gl-group-mark{display:inline-flex;align-items:center;justify-content:center}
 .gl-group-caret{display:none;align-items:center;justify-content:center}
 .gl-group-row:hover .gl-group-mark{display:none}
@@ -578,6 +589,22 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
 .gl-modal-title{font:var(--td-font-title-small);color:var(--td-text-color-primary)}
 .gl-modal-body{padding:16px;overflow:auto}
 `;
+
+    const NOTES_KEY = 'dsh-gitlab-notes-v1';
+
+    function loadNotes() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(NOTES_KEY) || '{}');
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+        const out = {};
+        for (const [key, value] of Object.entries(raw)) {
+          if (typeof value === 'string' && value.trim()) out[key] = value;
+        }
+        return out;
+      } catch (error) {
+        return {};
+      }
+    }
 
     function loadView() {
       const fallback = { viewMode: 'activity', activeProjectId: 0, eventFilter: 'all', openProjects: {}, sortDir: 0 };
@@ -761,6 +788,9 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
       const [query, setQuery] = useState('');
       const [openProjects, setOpenProjects] = useState(savedView.openProjects);
       const [sortDir, setSortDir] = useState(savedView.sortDir);
+      // Project notes stay in this browser only; nothing is written to GitLab.
+      const [notes, setNotes] = useState(loadNotes);
+      const [noteEdit, setNoteEdit] = useState(null);
       const [refs, setRefs] = useState({});
       const [openGroups, setOpenGroups] = useState({});
       const [selection, setSelection] = useState(null);
@@ -784,6 +814,7 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
       const refsRef = useRef({});
       const refsSeq = useRef({});
       const eventsCache = useRef({});
+      const noteCancel = useRef(false);
       const rootRef = useRef(null);
       const aliveRef = useRef(true);
 
@@ -945,6 +976,27 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
         if (!open) {
           setOpenProjects((prev) => Object.assign({}, prev, { [project.id]: true }));
           ensureRefs(project.id, false);
+        }
+      }
+
+      function commitNote() {
+        if (noteCancel.current) {
+          noteCancel.current = false;
+          setNoteEdit(null);
+          return;
+        }
+        if (!noteEdit) return;
+        const key = noteEdit.key;
+        const value = String(noteEdit.value || '').trim();
+        const next = Object.assign({}, notes);
+        if (value) next[key] = value;
+        else delete next[key];
+        setNotes(next);
+        setNoteEdit(null);
+        try {
+          localStorage.setItem(NOTES_KEY, JSON.stringify(next));
+        } catch (error) {
+          /* storage may be unavailable */
         }
       }
 
@@ -1474,6 +1526,9 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
         const refCount = bucket.status === 'ready' ? bucket.branches.length + bucket.tags.length : null;
         // Two groups can hold projects with the same name; show the full path then.
         const label = duplicateNames.get(project.name) > 1 ? project.pathWithNamespace : project.name;
+        const noteKey = project.pathWithNamespace || String(project.id);
+        const note = notes[noteKey] || '';
+        const editing = !!noteEdit && noteEdit.key === noteKey;
         return h(
           'div',
           { key: 'p' + project.id, className: 'gl-group' },
@@ -1498,7 +1553,49 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
               h('span', { className: 'gl-icon-folder' }, h(GlyphIcon, { name: open ? 'folder-open' : 'folder', size: 16 })),
               h('span', { className: 'gl-icon-caret' }, h(GlyphIcon, { name: open ? 'chevron-down' : 'chevron-right', size: 16 })),
             ),
-            h('span', { className: 'gl-name' }, label),
+            editing
+              ? h('input', {
+                  className: 'gl-note-input',
+                  value: noteEdit.value,
+                  autoFocus: true,
+                  placeholder: '写个备注，回车保存',
+                  'aria-label': '项目备注',
+                  onClick: (event) => event.stopPropagation(),
+                  onChange: (event) => setNoteEdit({ key: noteKey, value: event.target.value }),
+                  onBlur: commitNote,
+                  onKeyDown: (event) => {
+                    event.stopPropagation();
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      commitNote();
+                    } else if (event.key === 'Escape') {
+                      event.preventDefault();
+                      noteCancel.current = true;
+                      setNoteEdit(null);
+                    }
+                  },
+                })
+              : h(
+                  'span',
+                  { className: 'gl-name', title: label + (note ? '（' + note + '）' : '') },
+                  label,
+                  note ? h('span', { className: 'gl-note' }, '（' + note + '）') : null,
+                ),
+            h(
+              'button',
+              {
+                type: 'button',
+                className: 'gl-icon-btn gl-icon-btn-sm gl-edit-btn',
+                title: '备注',
+                'aria-label': note ? '修改备注' : '添加备注',
+                onClick: (event) => {
+                  event.stopPropagation();
+                  setNoteEdit({ key: noteKey, value: note });
+                },
+                onKeyDown: (event) => event.stopPropagation(),
+              },
+              h(GlyphIcon, { name: 'edit', size: 13 }),
+            ),
             refCount === null ? null : h('span', { className: 'gl-meta' }, String(refCount)),
           ),
           h(
