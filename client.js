@@ -9,7 +9,7 @@ window.__ModuleLoader__.load({
     const h = React.createElement;
     const { useState, useEffect, useRef } = React;
 
-    const VERSION = 'v0.4.2';
+    const VERSION = 'v0.4.3';
     const HEADERS = { 'x-gitlab-client': '1' };
     const JSON_HEADERS = { 'x-gitlab-client': '1', 'content-type': 'application/json' };
     const LAYOUT_KEY = 'dsh-gitlab-layout-v1';
