@@ -826,7 +826,7 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
       const [openProjects, setOpenProjects] = useState(savedView.openProjects);
       const [sortDir, setSortDir] = useState(savedView.sortDir);
       // Project notes stay in this browser only; nothing is written to GitLab.
-      const [notes, setNotes] = useState(loadNotes);
+      const [notes, setNotes] = useState({});
       const [noteEdit, setNoteEdit] = useState(null);
       const [refs, setRefs] = useState({});
       const [openGroups, setOpenGroups] = useState({});
@@ -1031,11 +1031,13 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
         else delete next[key];
         setNotes(next);
         setNoteEdit(null);
-        try {
-          localStorage.setItem(NOTES_KEY, JSON.stringify(next));
-        } catch (error) {
-          /* storage may be unavailable */
-        }
+        api('/gitlab/api/notes', {
+          method: 'POST',
+          headers: JSON_HEADERS,
+          body: JSON.stringify({ path: key, note: value }),
+        }).catch(() => {
+          /* keep the optimistic value; the next load re-syncs from the Host */
+        });
       }
 
       function cycleSort() {
@@ -1364,6 +1366,42 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
           }
         }
       }
+
+      useEffect(() => {
+        let alive = true;
+        (async () => {
+          const legacy = loadNotes();
+          try {
+            const data = await api('/gitlab/api/notes');
+            if (!alive) return;
+            const hostNotes = (data && data.notes) || {};
+            if (!Object.keys(hostNotes).length && Object.keys(legacy).length) {
+              // First run after the move to host storage: lift the browser copy.
+              for (const [key, value] of Object.entries(legacy)) {
+                await api('/gitlab/api/notes', {
+                  method: 'POST',
+                  headers: JSON_HEADERS,
+                  body: JSON.stringify({ path: key, note: value }),
+                });
+              }
+              try {
+                localStorage.removeItem(NOTES_KEY);
+              } catch (error) {
+                /* ignore */
+              }
+              if (alive) setNotes(legacy);
+              return;
+            }
+            setNotes(hostNotes);
+          } catch (error) {
+            // Host unreachable: keep showing whatever this browser had.
+            if (alive) setNotes(legacy);
+          }
+        })();
+        return () => {
+          alive = false;
+        };
+      }, []);
 
       useEffect(() => {
         startNotifyPolling();

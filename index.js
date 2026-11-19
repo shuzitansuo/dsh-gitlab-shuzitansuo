@@ -78,6 +78,11 @@ export function apply(ctx, config = {}) {
         });
   const cacheTtl = Number(config.cacheTtlMs) > 0 ? Number(config.cacheTtlMs) : DEFAULT_TTL_MS;
   const cache = new Map();
+  // Project notes are local annotations, so they live beside the other state
+  // files rather than in the browser: one copy per machine, surviving restarts
+  // and browser changes.
+  const notesFile = path.join(stateDir, 'notes.json');
+  let notesCache = null;
   // Last identity the Host verified, shown by the panel as "connected as".
   let lastUser = null;
 
@@ -113,6 +118,35 @@ export function apply(ctx, config = {}) {
     const baseUrl = resolveBaseUrl();
     const { token, source } = await resolveToken();
     return { client: new GitLabClient({ baseUrl, token }), baseUrl, token, source };
+  }
+
+  function readNotes() {
+    if (notesCache) return notesCache;
+    try {
+      const raw = JSON.parse(fs.readFileSync(notesFile, 'utf8'));
+      const out = {};
+      if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+        for (const [key, value] of Object.entries(raw)) {
+          if (typeof value === 'string' && value.trim()) out[key] = value;
+        }
+      }
+      notesCache = out;
+    } catch (error) {
+      notesCache = {};
+    }
+    return notesCache;
+  }
+
+  function writeNotes(next) {
+    notesCache = next;
+    try {
+      fs.mkdirSync(path.dirname(notesFile), { recursive: true, mode: 0o700 });
+      const tmp = notesFile + '.' + process.pid + '.tmp';
+      fs.writeFileSync(tmp, JSON.stringify(next, null, 2), { mode: 0o600 });
+      fs.renameSync(tmp, notesFile);
+    } catch (error) {
+      /* keep the in-memory copy; the next write retries */
+    }
   }
 
   function invalidate(prefix) {
@@ -365,6 +399,27 @@ export function apply(ctx, config = {}) {
       const result = fresh ? await load() : await cached('refs:' + projectId, cacheTtl, load);
       if (fresh) putCache('refs:' + projectId, result);
       return json(res, 200, Object.assign({ ok: true, configured: true }, result));
+    }
+
+    if (method === 'GET' && route === 'notes') {
+      return json(res, 200, { ok: true, notes: readNotes() });
+    }
+
+    if (method === 'POST' && route === 'notes') {
+      let body;
+      try {
+        body = JSON.parse((await readBody(req)) || '{}');
+      } catch (error) {
+        return json(res, 400, { ok: false, error: '请求体不是合法 JSON' });
+      }
+      const key = typeof body.path === 'string' ? body.path.trim() : '';
+      if (!key) return json(res, 400, { ok: false, error: 'path required' });
+      const note = typeof body.note === 'string' ? body.note.trim().slice(0, 200) : '';
+      const next = Object.assign({}, readNotes());
+      if (note) next[key] = note;
+      else delete next[key];
+      writeNotes(next);
+      return json(res, 200, { ok: true, notes: next });
     }
 
     if (method === 'GET' && route === 'activity') {
