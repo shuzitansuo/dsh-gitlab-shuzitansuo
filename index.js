@@ -504,6 +504,9 @@ export function apply(ctx, config = {}) {
       const loadMerged = async () => {
         const { projects } = await client.projects();
         const list = (projects || []).slice(0, Number(config.overviewMaxProjects) || 20);
+        // Enough candidates to fill the 300-row window without pulling 100
+        // events for every one of twenty projects.
+        const perProject = Math.min(100, Math.max(30, Math.ceil(300 / Math.max(1, list.length)) * 2));
         const collected = [];
         let cursor = 0;
         const worker = async () => {
@@ -511,7 +514,7 @@ export function apply(ctx, config = {}) {
             const project = list[cursor];
             cursor += 1;
             try {
-              const pageResult = await client.events(project.id, filter, { perPage: 100, page: 1 });
+              const pageResult = await client.events(project.id, filter, { perPage: perProject, page: 1 });
               for (const event of pageResult.items) {
                 collected.push(
                   Object.assign({}, event, {
@@ -526,7 +529,7 @@ export function apply(ctx, config = {}) {
             }
           }
         };
-        await Promise.all([worker(), worker(), worker(), worker()]);
+        await Promise.all([worker(), worker(), worker(), worker(), worker(), worker()]);
         collected.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)) || b.id - a.id);
         return collected.slice(0, 300);
       };
