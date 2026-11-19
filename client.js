@@ -1731,7 +1731,14 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
       };
 
       const renderRef = (project, kind, item) => {
-        const active = selection && selection.projectId === project.id && selection.kind === kind && selection.name === item.name;
+        // A ref only reads as "current" while its detail is on screen; the
+        // overview and the project feed have their own selected row.
+        const active =
+          viewMode === 'ref' &&
+          !!selection &&
+          selection.projectId === project.id &&
+          selection.kind === kind &&
+          selection.name === item.name;
         return h(
           'div',
           {
