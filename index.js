@@ -46,6 +46,24 @@ function readSnapshot() {
   return { version, files };
 }
 
+const DEFAULT_UPDATE_API = 'https://api.github.com';
+const DEFAULT_UPDATE_REPO = 'shuzitansuo/dsh-gitlab-shuzitansuo';
+
+function parseVersion(text) {
+  const match = String(text || '').match(/(\d+)\.(\d+)\.(\d+)/);
+  return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : null;
+}
+
+function compareVersions(a, b) {
+  const left = parseVersion(a);
+  const right = parseVersion(b);
+  if (!left || !right) return 0;
+  for (let index = 0; index < 3; index += 1) {
+    if (left[index] !== right[index]) return left[index] > right[index] ? 1 : -1;
+  }
+  return 0;
+}
+
 export function apply(ctx, config = {}) {
   const settings = createSettingsStore();
   const bootSnapshot = readSnapshot();
@@ -133,6 +151,61 @@ export function apply(ctx, config = {}) {
       throw new GitLabError('GitLab 地址只支持 http:// 或 https://');
     }
     return (parsed.origin + parsed.pathname).replace(/\/+$/, '');
+  }
+
+  // Read-only lookup of the newest published version. Tags are consulted too,
+  // so a tag without a published release still counts.
+  async function fetchUpstreamVersion() {
+    const apiBase = String(config.updateApiBase || DEFAULT_UPDATE_API).replace(/\/+$/, '');
+    const repo = String(config.updateRepo || DEFAULT_UPDATE_REPO);
+    const headers = { accept: 'application/vnd.github+json', 'user-agent': 'dsh-gitlab-plugin' };
+    const candidates = [];
+    let failure = null;
+
+    try {
+      const res = await fetch(`${apiBase}/repos/${repo}/releases/latest`, {
+        headers,
+        signal: AbortSignal.timeout(8000),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.tag_name) {
+          candidates.push({ version: data.tag_name, url: data.html_url || '', source: 'release' });
+        }
+      } else {
+        failure = failure || new Error('GitHub 返回 HTTP ' + res.status);
+      }
+    } catch (error) {
+      failure = failure || error;
+    }
+
+    try {
+      const res = await fetch(`${apiBase}/repos/${repo}/tags?per_page=100`, {
+        headers,
+        signal: AbortSignal.timeout(8000),
+      });
+      if (res.ok) {
+        const list = await res.json();
+        for (const tag of Array.isArray(list) ? list : []) {
+          if (tag && tag.name) candidates.push({ version: tag.name, url: '', source: 'tag' });
+        }
+      } else {
+        failure = failure || new Error('GitHub 返回 HTTP ' + res.status);
+      }
+    } catch (error) {
+      failure = failure || error;
+    }
+
+    if (!candidates.length) {
+      throw failure || new Error('GitHub 上没有可读的 release 或 tag');
+    }
+    let best = candidates[0];
+    for (const candidate of candidates) {
+      if (compareVersions(candidate.version, best.version) > 0) best = candidate;
+    }
+    if (!best.url) best.url = `https://github.com/${repo}/releases/tag/${best.version}`;
+    best.repo = repo;
+    return best;
   }
 
   async function saveSettings(body) {
@@ -337,13 +410,29 @@ export function apply(ctx, config = {}) {
       // Host-side modules only reload with the plugin, the browser half reloads
       // with the page.
       const needsRestart = changed.some((file) => file !== 'client.js');
+
+      let upstream = null;
+      let upstreamError = '';
+      if (config.updateCheck !== false) {
+        try {
+          upstream = await cached('update:upstream', 10 * 60 * 1000, fetchUpstreamVersion);
+        } catch (error) {
+          upstreamError = error?.message || String(error);
+        }
+      }
+
+      const localVersion = bootSnapshot.version;
+      const updateAvailable = Boolean(upstream) && compareVersions(upstream.version, localVersion) > 0;
       return json(res, 200, {
         ok: true,
-        version: bootSnapshot.version,
-        latestVersion: latest.version,
+        version: localVersion,
+        latestVersion: upstream ? upstream.version : localVersion,
+        upstream,
+        upstreamError,
+        updateAvailable,
         changed,
         needsRestart,
-        upToDate: changed.length === 0,
+        upToDate: changed.length === 0 && !updateAvailable,
       });
     }
 

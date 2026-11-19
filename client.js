@@ -9,7 +9,7 @@ window.__ModuleLoader__.load({
     const h = React.createElement;
     const { useState, useEffect, useRef } = React;
 
-    const VERSION = 'v0.4.0';
+    const VERSION = 'v0.4.1';
     const HEADERS = { 'x-gitlab-client': '1' };
     const JSON_HEADERS = { 'x-gitlab-client': '1', 'content-type': 'application/json' };
     const LAYOUT_KEY = 'dsh-gitlab-layout-v1';
@@ -1416,22 +1416,42 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
         setUpdateCheck({ status: 'busy', text: '检查中…', detail: '' });
         try {
           const data = await api('/gitlab/api/update');
-          if (data.upToDate) {
+          if (data.updateAvailable && data.upstream) {
             setUpdateCheck({
-              status: 'latest',
-              text: '已是最新',
-              detail: '本地插件文件与运行中的 v' + data.version + ' 一致。',
+              status: 'stale',
+              text: '新版本 ' + data.upstream.version,
+              detail:
+                '当前 v' + data.version + ' → 最新 ' + data.upstream.version +
+                '。到插件目录执行 git pull 后重启 DSH。下载：' + data.upstream.url,
+            });
+            return;
+          }
+          if (data.changed && data.changed.length) {
+            setUpdateCheck({
+              status: 'stale',
+              text: '有更新',
+              detail:
+                (data.needsRestart
+                  ? '插件代码已更新，重启 DSH 后生效。'
+                  : '页面代码已更新，刷新页面后生效。若界面没变就重启 DSH。') +
+                '变更文件：' + data.changed.join('、'),
+            });
+            return;
+          }
+          if (data.upstreamError) {
+            setUpdateCheck({
+              status: 'error',
+              text: '检查失败',
+              detail: '本地 v' + data.version + ' 未改动，但连接 GitHub 失败：' + data.upstreamError,
             });
             return;
           }
           setUpdateCheck({
-            status: 'stale',
-            text: '有更新',
+            status: 'latest',
+            text: '已是最新',
             detail:
-              (data.needsRestart
-                ? '插件代码已更新，重启 DSH 后生效。'
-                : '页面代码已更新，刷新页面后生效。若界面没变就重启 DSH。') +
-              '变更文件：' + data.changed.join('、'),
+              '运行中 v' + data.version +
+              (data.upstream ? '，GitHub 上最新也是 ' + data.upstream.version : '') + '。',
           });
         } catch (error) {
           setUpdateCheck({ status: 'error', text: '检查失败', detail: error?.message || String(error) });
