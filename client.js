@@ -408,6 +408,7 @@ body[data-ds-dark-theme] .gl-root{
 .gl-note{color:var(--td-text-color-placeholder);font-weight:400}
 .gl-overview{padding:6px 8px 0;flex:0 0 auto}
 .gl-overview-hint{flex:0 0 auto;font-size:11px;line-height:16px;color:var(--td-text-color-placeholder)}
+.gl-event-note{flex:0 0 auto;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;padding:0 8px;border-radius:10px;background:var(--td-brand-color-light);color:var(--td-brand-color);font-size:11px;line-height:18px}
 .gl-event-project{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 6px;border-radius:3px;background:var(--td-bg-color-secondarycontainer);color:var(--td-text-color-secondary);font-size:11px;line-height:16px;font-family:var(--td-font-family-code)}
 .gl-note-input{flex:1 1 auto;min-width:0;height:24px;padding:0 6px;border:1px solid var(--td-brand-color);border-radius:4px;background:var(--td-bg-color-container);color:var(--td-text-color-primary);font:var(--td-font-body-medium);outline:none}
 .gl-edit-btn{opacity:0;pointer-events:none;transition:opacity .12s linear}
@@ -1815,6 +1816,16 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
               h('span', { className: 'gl-event-time' }, (view.detail ? ' · ' : '') + formatTime(item.createdAt)),
             ),
           ),
+          showProject && item.projectName && notes[item.projectName]
+            ? h(
+                'span',
+                {
+                  className: 'gl-event-note',
+                  title: '项目备注：' + notes[item.projectName],
+                },
+                notes[item.projectName],
+              )
+            : null,
         );
       };
 
