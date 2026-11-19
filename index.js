@@ -347,6 +347,57 @@ export function apply(ctx, config = {}) {
       });
     }
 
+    if (method === 'GET' && route === 'overview') {
+      const filter = ['push', 'merge'].includes(url.searchParams.get('filter')) ? url.searchParams.get('filter') : 'all';
+      const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
+      const { client } = await makeClient();
+      if (!client.configured) {
+        return json(res, 200, { ok: true, configured: false, filter, page, events: [], hasMore: false });
+      }
+      // GitLab has no cross-project feed for other people's activity, so the
+      // overview fans out per project once and pages through the merged result.
+      const merged = await cached('overview:' + filter, cacheTtl, async () => {
+        const { projects } = await client.projects();
+        const list = (projects || []).slice(0, Number(config.overviewMaxProjects) || 20);
+        const collected = [];
+        let cursor = 0;
+        const worker = async () => {
+          while (cursor < list.length) {
+            const project = list[cursor];
+            cursor += 1;
+            try {
+              const pageResult = await client.events(project.id, filter, { perPage: 100, page: 1 });
+              for (const event of pageResult.items) {
+                collected.push(
+                  Object.assign({}, event, {
+                    projectId: project.id,
+                    projectName: project.pathWithNamespace || project.name,
+                    projectWebUrl: project.webUrl || '',
+                  }),
+                );
+              }
+            } catch (error) {
+              /* one unreachable project must not blank the overview */
+            }
+          }
+        };
+        await Promise.all([worker(), worker(), worker(), worker()]);
+        collected.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)) || b.id - a.id);
+        return collected.slice(0, 300);
+      });
+      const size = 30;
+      const offset = (page - 1) * size;
+      return json(res, 200, {
+        ok: true,
+        configured: true,
+        filter,
+        page,
+        total: merged.length,
+        events: merged.slice(offset, offset + size),
+        hasMore: offset + size < merged.length,
+      });
+    }
+
     if (method === 'GET' && route === 'events') {
       const projectId = Number(url.searchParams.get('projectId') || 0);
       const filter = ['push', 'merge'].includes(url.searchParams.get('filter')) ? url.searchParams.get('filter') : 'all';

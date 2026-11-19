@@ -275,6 +275,7 @@ window.__ModuleLoader__.load({
       external: {
         paths: ['M9.6 2.6h3.8v3.8', 'M13.4 2.6 8.2 7.8', 'M12.2 9.8v2.6a1.6 1.6 0 0 1-1.6 1.6H3.6A1.6 1.6 0 0 1 2 12.4V5.4a1.6 1.6 0 0 1 1.6-1.6h2.6'],
       },
+      pulse: { paths: ['M2 8h2.6L6.4 4l3 8 2-5.4 1 1.4H14'] },
       edit: {
         paths: [
           'M10.6 3.1a1.6 1.6 0 0 1 2.3 2.3L5.2 13.1l-2.8.6.6-2.8z',
@@ -405,6 +406,9 @@ body[data-ds-dark-theme] .gl-root{
 .gl-project-active{background:var(--dsw-alias-interactive-bg-active,rgba(0,0,0,.1))}
 .gl-project-active .gl-icon{color:var(--gl-icon-brand)}
 .gl-note{color:var(--td-text-color-placeholder);font-weight:400}
+.gl-overview{padding:6px 8px 0;flex:0 0 auto}
+.gl-overview-hint{flex:0 0 auto;font-size:11px;line-height:16px;color:var(--td-text-color-placeholder)}
+.gl-event-project{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 6px;border-radius:3px;background:var(--td-bg-color-secondarycontainer);color:var(--td-text-color-secondary);font-size:11px;line-height:16px;font-family:var(--td-font-family-code)}
 .gl-note-input{flex:1 1 auto;min-width:0;height:24px;padding:0 6px;border:1px solid var(--td-brand-color);border-radius:4px;background:var(--td-bg-color-container);color:var(--td-text-color-primary);font:var(--td-font-body-medium);outline:none}
 .gl-edit-btn{opacity:0;pointer-events:none;transition:opacity .12s linear}
 .gl-project:hover .gl-edit-btn,.gl-project:focus-within .gl-edit-btn,.gl-edit-btn:focus-visible{opacity:1;pointer-events:auto}
@@ -612,7 +616,8 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
         const saved = JSON.parse(localStorage.getItem(VIEW_KEY) || 'null');
         if (!saved || typeof saved !== 'object') return fallback;
         return {
-          viewMode: saved.viewMode === 'ref' ? 'ref' : 'activity',
+          viewMode:
+            saved.viewMode === 'ref' ? 'ref' : saved.viewMode === 'overview' ? 'overview' : 'activity',
           activeProjectId: Number(saved.activeProjectId) || 0,
           eventFilter: saved.eventFilter === 'push' ? 'push' : 'all',
           openProjects:
@@ -799,6 +804,7 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
       const [activeProjectId, setActiveProjectId] = useState(savedView.activeProjectId);
       const [eventFilter, setEventFilter] = useState(savedView.eventFilter);
       const [events, setEvents] = useState({ key: '', status: 'idle', items: [], hasMore: false, page: 1, error: '' });
+      const [overview, setOverview] = useState({ key: '', status: 'idle', items: [], hasMore: false, page: 1, error: '' });
       const [dialog, setDialog] = useState(null);
       // Shared by the inline first-run form and the settings modal, so a failed
       // attempt reports itself in either place.
@@ -1130,6 +1136,40 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
         }
       }
 
+      async function loadOverview(filter, fresh, page) {
+        const target = page || 1;
+        const key = 'overview:' + filter;
+        if (target === 1) {
+          setOverview({ key, status: 'loading', items: [], hasMore: false, page: 1, error: '' });
+        } else {
+          setOverview((prev) => (prev.key === key ? Object.assign({}, prev, { status: 'more' }) : prev));
+        }
+        try {
+          const data = await api(
+            '/gitlab/api/overview?filter=' + filter + '&page=' + target + (fresh ? '&fresh=1' : ''),
+          );
+          const base = target > 1 && overview.key === key ? overview.items : [];
+          setOverview({
+            key,
+            status: 'ready',
+            items: base.concat(data.events || []),
+            hasMore: !!data.hasMore,
+            page: target,
+            error: '',
+          });
+        } catch (error) {
+          if (target > 1) {
+            setOverview((prev) => (prev.key === key ? Object.assign({}, prev, { status: 'ready' }) : prev));
+            return;
+          }
+          setOverview((prev) =>
+            prev.key === key
+              ? { key, status: 'error', items: [], hasMore: false, page: 1, error: error?.message || String(error) }
+              : prev,
+          );
+        }
+      }
+
       async function loadCommits(projectId, kind, ref, fresh, page) {
         const target = page || 1;
         const key = projectId + ':' + kind + ':' + ref;
@@ -1189,6 +1229,7 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
           if (openProjects[key]) ensureRefs(Number(key), true);
         }
         loadProjects(true);
+        if (viewMode === 'overview') loadOverview(eventFilter, true, 1);
         if (viewMode === 'activity' && activeProjectId) loadEvents(activeProjectId, eventFilter, true);
         if (selection) loadCommits(selection.projectId, selection.kind, selection.name, true);
       }
@@ -1403,6 +1444,10 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
       }
 
       useEffect(() => {
+        if (viewMode === 'overview') {
+          loadOverview(eventFilter, false, 1);
+          return;
+        }
         if (viewMode !== 'activity' || !activeProjectId) return;
         loadEvents(activeProjectId, eventFilter, false);
       }, [viewMode, activeProjectId, eventFilter]);
@@ -1470,6 +1515,7 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
       const activityProject = activeProjectId ? projectById(activeProjectId) : null;
 
       const webLink = (() => {
+        if (viewMode === 'overview') return '';
         if (viewMode === 'activity') return activityProject ? activityProject.webUrl + '/-/activity' : '';
         if (!selection || !selectedProject || !selectedProject.webUrl) return '';
         const base = selectedProject.webUrl;
@@ -1693,11 +1739,11 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
           action || null,
         );
 
-      const renderEventRow = (project, item) => {
-        const view = describeEvent(item, project.webUrl);
+      const renderEventRow = (item, webUrl, showProject) => {
+        const view = describeEvent(item, webUrl);
         return h(
           'div',
-          { key: 'ev' + item.id, className: 'gl-event' },
+          { key: 'ev' + item.id + ':' + (item.projectId || ''), className: 'gl-event' },
           h(
             'span',
             {
@@ -1716,6 +1762,9 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
               h('span', { className: 'gl-event-author' }, item.authorName || item.authorUsername || '某人'),
               h('span', { className: 'gl-event-action' }, view.action),
               view.subject ? h('span', { className: 'gl-event-subject', title: view.subject }, view.subject) : null,
+              showProject && item.projectName
+                ? h('span', { className: 'gl-event-project', title: item.projectName }, item.projectName)
+                : null,
             ),
             h(
               'div',
@@ -1741,93 +1790,113 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
         );
       };
 
+      const renderFilterTabs = () =>
+        h(
+          'div',
+          { className: 'gl-subtabs', role: 'tablist', 'aria-label': '活动筛选' },
+          EVENT_FILTERS.map((filter) =>
+            h(
+              'button',
+              {
+                key: filter.key,
+                type: 'button',
+                role: 'tab',
+                'aria-selected': eventFilter === filter.key,
+                className: 'gl-subtab' + (eventFilter === filter.key ? ' gl-subtab-active' : ''),
+                onClick: () => setEventFilter(filter.key),
+              },
+              filter.label,
+            ),
+          ),
+        );
+
+      const renderFeed = (state, options) => {
+        const list = state.items || [];
+        if (state.status === 'loading') return h('div', { className: 'gl-empty' }, '读取活动…');
+        if (state.status === 'error') {
+          return h(
+            'div',
+            { className: 'gl-empty gl-error-text' },
+            state.error,
+            h('div', { className: 'gl-error-actions' }, h('button', { className: 'gl-link', onClick: options.onRetry }, '重试')),
+          );
+        }
+        if (!list.length) return h('div', { className: 'gl-empty' }, options.emptyText);
+        return h(
+          'div',
+          { className: 'gl-events' },
+          h(
+            'div',
+            { className: 'gl-timeline' },
+            groupByDay(list, (item) => item.createdAt).map((group) =>
+              h(
+                'div',
+                { key: 'day-' + group.key, className: 'gl-day' },
+                h(
+                  'div',
+                  { className: 'gl-day-head' },
+                  h('span', { className: 'gl-day-node' }, h(GlyphIcon, { name: 'commit', size: 14 })),
+                  h('span', { className: 'gl-day-label' }, group.label),
+                ),
+                group.items.map((item) => renderEventRow(item, options.webUrl(item), options.showProject)),
+              ),
+            ),
+          ),
+          state.hasMore
+            ? h(
+                'div',
+                { className: 'gl-more' },
+                h(
+                  'button',
+                  { className: 'gl-btn', disabled: state.status === 'more', onClick: options.onMore },
+                  state.status === 'more' ? '加载中…' : '加载更多',
+                ),
+              )
+            : null,
+        );
+      };
+
       const renderActivity = () => {
         if (!activityProject) {
           return renderEmptyState('选一个项目', '点左侧的项目名，就能看到这个项目的活动记录。');
         }
-        const list = events.items || [];
         return h(
           'div',
           { className: 'gl-activity' },
-          h(
-            'div',
-            { className: 'gl-subtabs', role: 'tablist', 'aria-label': '活动筛选' },
-            EVENT_FILTERS.map((filter) =>
-              h(
-                'button',
-                {
-                  key: filter.key,
-                  type: 'button',
-                  role: 'tab',
-                  'aria-selected': eventFilter === filter.key,
-                  className: 'gl-subtab' + (eventFilter === filter.key ? ' gl-subtab-active' : ''),
-                  onClick: () => setEventFilter(filter.key),
-                },
-                filter.label,
-              ),
-            ),
-          ),
-          events.status === 'loading'
-            ? h('div', { className: 'gl-empty' }, '读取活动…')
-            : events.status === 'error'
-              ? h(
-                  'div',
-                  { className: 'gl-empty gl-error-text' },
-                  events.error,
-                  h(
-                    'div',
-                    { className: 'gl-error-actions' },
-                    h('button', { className: 'gl-link', onClick: () => loadEvents(activeProjectId, eventFilter, true) }, '重试'),
-                  ),
-                )
-              : list.length === 0
-                ? h(
-                    'div',
-                    { className: 'gl-empty' },
-                    eventFilter === 'push'
-                      ? '这个项目还没有推送事件'
-                      : eventFilter === 'merge'
-                        ? '这个项目还没有合并事件'
-                        : '这个项目还没有相关活动',
-                  )
-                : h(
-                    'div',
-                    { className: 'gl-events' },
-                    h(
-                      'div',
-                      { className: 'gl-timeline' },
-                      groupByDay(list, (item) => item.createdAt).map((group) =>
-                        h(
-                          'div',
-                          { key: 'day-' + group.key, className: 'gl-day' },
-                          h(
-                            'div',
-                            { className: 'gl-day-head' },
-                            h('span', { className: 'gl-day-node' }, h(GlyphIcon, { name: 'commit', size: 14 })),
-                            h('span', { className: 'gl-day-label' }, group.label),
-                          ),
-                          group.items.map((item) => renderEventRow(activityProject, item)),
-                        ),
-                      ),
-                    ),
-                    events.hasMore
-                      ? h(
-                          'div',
-                          { className: 'gl-more' },
-                          h(
-                            'button',
-                            {
-                              className: 'gl-btn',
-                              disabled: events.status === 'more',
-                              onClick: () => loadEvents(activeProjectId, eventFilter, false, events.page + 1),
-                            },
-                            events.status === 'more' ? '加载中…' : '加载更多',
-                          ),
-                        )
-                      : null,
-                  ),
+          renderFilterTabs(),
+          renderFeed(events, {
+            emptyText:
+              eventFilter === 'push'
+                ? '这个项目还没有推送事件'
+                : eventFilter === 'merge'
+                  ? '这个项目还没有合并事件'
+                  : '这个项目还没有相关活动',
+            showProject: false,
+            webUrl: () => activityProject.webUrl,
+            onRetry: () => loadEvents(activeProjectId, eventFilter, true),
+            onMore: () => loadEvents(activeProjectId, eventFilter, false, events.page + 1),
+          }),
         );
       };
+
+      const renderOverview = () =>
+        h(
+          'div',
+          { className: 'gl-activity' },
+          renderFilterTabs(),
+          renderFeed(overview, {
+            emptyText:
+              eventFilter === 'push'
+                ? '还没有推送事件'
+                : eventFilter === 'merge'
+                  ? '还没有合并事件'
+                  : '还没有任何活动',
+            showProject: true,
+            webUrl: (item) => item.projectWebUrl || '',
+            onRetry: () => loadOverview(eventFilter, true, 1),
+            onMore: () => loadOverview(eventFilter, false, overview.page + 1),
+          }),
+        );
 
       const renderMain = () => {
         if (phase === 'loading') return renderEmptyState('正在连接 GitLab…', '正在读取本机保存的连接设置。');
@@ -1857,6 +1926,7 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
             ),
           );
         }
+        if (viewMode === 'overview') return renderOverview();
         if (viewMode === 'activity') return renderActivity();
         if (!selection) {
           return renderEmptyState('选择左侧的分支或 Tag', '展开项目可以看到它的分支与 Tag，点一条就能看最近的提交记录。');
@@ -2053,6 +2123,28 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
                   }),
                 ),
               ),
+              phase === 'ready' && projects.length
+                ? h(
+                    'div',
+                    { className: 'gl-overview' },
+                    h(
+                      'div',
+                      {
+                        className:
+                          'gl-row gl-project gl-overview-row' + (viewMode === 'overview' ? ' gl-project-active' : ''),
+                        role: 'button',
+                        tabIndex: 0,
+                        'aria-current': viewMode === 'overview' ? 'true' : undefined,
+                        title: '所有项目的动态',
+                        onClick: () => setViewMode('overview'),
+                        onKeyDown: onRowKey(() => setViewMode('overview')),
+                      },
+                      h('span', { className: 'gl-icon' }, h(GlyphIcon, { name: 'pulse', size: 16 })),
+                      h('span', { className: 'gl-name' }, '总览'),
+                      h('span', { className: 'gl-overview-hint' }, '全部项目'),
+                    ),
+                  )
+                : null,
               phase === 'ready' && !projectsError && filtered.length
                 ? h(
                     'div',
@@ -2161,7 +2253,13 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
             h(
               'div',
               { className: 'gl-crumbs' },
-              viewMode === 'activity'
+              viewMode === 'overview'
+                ? [
+                    h('span', { key: 'o', className: 'gl-crumb gl-crumb-strong' }, '总览'),
+                    h('span', { key: 's', className: 'gl-crumb-sep' }, '/'),
+                    h('span', { key: 'a', className: 'gl-crumb' }, '所有项目动态'),
+                  ]
+                : viewMode === 'activity'
                 ? activityProject
                   ? [
                       h('span', { key: 'p', className: 'gl-crumb', title: activityProject.pathWithNamespace }, activityProject.name),
@@ -2211,11 +2309,20 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
                 : null,
               h(IconAction, {
                 icon: 'refresh',
-                title: viewMode === 'activity' ? '刷新活动' : '刷新提交',
-                busy: viewMode === 'activity' ? events.status === 'loading' : commits.status === 'loading',
-                disabled: viewMode === 'activity' ? !activeProjectId : !selection,
+                title:
+                  viewMode === 'overview' ? '刷新总览' : viewMode === 'activity' ? '刷新活动' : '刷新提交',
+                busy:
+                  viewMode === 'overview'
+                    ? overview.status === 'loading'
+                    : viewMode === 'activity'
+                      ? events.status === 'loading'
+                      : commits.status === 'loading',
+                disabled:
+                  viewMode === 'overview' ? false : viewMode === 'activity' ? !activeProjectId : !selection,
                 onClick: () => {
-                  if (viewMode === 'activity') {
+                  if (viewMode === 'overview') {
+                    loadOverview(eventFilter, true, 1);
+                  } else if (viewMode === 'activity') {
                     if (activeProjectId) loadEvents(activeProjectId, eventFilter, true);
                   } else if (selection) {
                     loadCommits(selection.projectId, selection.kind, selection.name, true);
