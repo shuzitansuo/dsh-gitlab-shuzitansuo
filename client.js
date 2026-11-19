@@ -1604,7 +1604,8 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
               className:
                 'gl-row gl-project' +
                 (project.archived ? ' gl-muted' : '') +
-                (activeProjectId === project.id ? ' gl-project-active' : ''),
+                // While the overview is on screen no single project is the current one.
+                (viewMode !== 'overview' && activeProjectId === project.id ? ' gl-project-active' : ''),
               title: project.pathWithNamespace,
               role: 'button',
               tabIndex: 0,
