@@ -1,6 +1,6 @@
 {
   "name": "@local/dsh-gitlab",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "description": "GitLab 项目工作台：左侧项目树可展开分支与标签，右侧查看引用详情与提交记录",
