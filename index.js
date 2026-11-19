@@ -415,7 +415,7 @@ export function apply(ctx, config = {}) {
       let upstreamError = '';
       if (config.updateCheck !== false) {
         try {
-          upstream = await cached('update:upstream', 10 * 60 * 1000, fetchUpstreamVersion);
+          upstream = await cached('update:upstream', 45 * 1000, fetchUpstreamVersion);
         } catch (error) {
           upstreamError = error?.message || String(error);
         }
