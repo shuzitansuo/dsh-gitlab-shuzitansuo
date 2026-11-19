@@ -500,7 +500,8 @@ export function apply(ctx, config = {}) {
       }
       // GitLab has no cross-project feed for other people's activity, so the
       // overview fans out per project once and pages through the merged result.
-      const merged = await cached('overview:' + filter, cacheTtl, async () => {
+      const overviewKey = 'overview:' + filter;
+      const loadMerged = async () => {
         const { projects } = await client.projects();
         const list = (projects || []).slice(0, Number(config.overviewMaxProjects) || 20);
         const collected = [];
@@ -528,7 +529,9 @@ export function apply(ctx, config = {}) {
         await Promise.all([worker(), worker(), worker(), worker()]);
         collected.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)) || b.id - a.id);
         return collected.slice(0, 300);
-      });
+      };
+      const merged = fresh ? await loadMerged() : await cached(overviewKey, cacheTtl, loadMerged);
+      if (fresh) putCache(overviewKey, merged);
       const size = 30;
       const offset = (page - 1) * size;
       return json(res, 200, {

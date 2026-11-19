@@ -1159,7 +1159,7 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
             error: '',
           };
           eventsCache.current[key] = merged;
-          setEvents(merged);
+          setEvents((prev) => (prev.key === key ? merged : prev));
         } catch (error) {
           if (target > 1) {
             setEvents((prev) => (prev.key === key ? Object.assign({}, prev, { status: 'ready' }) : prev));
@@ -1182,14 +1182,18 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
           const data = await api(
             '/gitlab/api/overview?filter=' + filter + '&page=' + target + (fresh ? '&fresh=1' : ''),
           );
-          const base = target > 1 && overview.key === key ? overview.items : [];
-          setOverview({
-            key,
-            status: 'ready',
-            items: base.concat(data.events || []),
-            hasMore: !!data.hasMore,
-            page: target,
-            error: '',
+          setOverview((prev) => {
+            // A slower request for a filter the user already left must not win.
+            if (prev.key !== key) return prev;
+            const base = target > 1 ? prev.items : [];
+            return {
+              key,
+              status: 'ready',
+              items: base.concat(data.events || []),
+              hasMore: !!data.hasMore,
+              page: target,
+              error: '',
+            };
           });
         } catch (error) {
           if (target > 1) {
