@@ -115,6 +115,21 @@ window.__ModuleLoader__.load({
       return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
     }
 
+    const NOTE_COLOR_COUNT = 8;
+
+    // Assign colours by sorted project name so the first eight projects are all
+    // different; beyond that colours repeat, which is fine.
+    function noteColorMap(items) {
+      const names = [];
+      for (const item of items) {
+        if (item.projectName && names.indexOf(item.projectName) < 0) names.push(item.projectName);
+      }
+      names.sort();
+      const map = new Map();
+      names.forEach((name, index) => map.set(name, index % NOTE_COLOR_COUNT));
+      return map;
+    }
+
     function avatarColor(seed) {
       const palette = ['#3f7ff0', '#22b07d', '#f5a524', '#e8544f', '#8f6bff', '#19b5c9', '#e879b9', '#7a869a'];
       const text = String(seed || '?');
@@ -408,7 +423,23 @@ body[data-ds-dark-theme] .gl-root{
 .gl-note{color:var(--td-text-color-placeholder);font-weight:400}
 .gl-overview{padding:6px 8px 0;flex:0 0 auto}
 .gl-overview-hint{flex:0 0 auto;font-size:11px;line-height:16px;color:var(--td-text-color-placeholder)}
-.gl-event-note{flex:0 0 auto;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;padding:0 8px;border-radius:10px;background:var(--td-brand-color-light);color:var(--td-brand-color);font-size:11px;line-height:18px}
+.gl-event-note{flex:0 0 auto;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;padding:0 8px;border-radius:10px;font-size:11px;line-height:18px}
+.gl-note-c0{background:#eaf1ff;color:#0b57d0}
+.gl-note-c1{background:#e6f7ee;color:#0b7a4b}
+.gl-note-c2{background:#fff2e0;color:#a85800}
+.gl-note-c3{background:#fdeaea;color:#b42318}
+.gl-note-c4{background:#f3ecff;color:#5b34c4}
+.gl-note-c5{background:#e3f6f8;color:#0b6c7a}
+.gl-note-c6{background:#fdecf5;color:#a8326d}
+.gl-note-c7{background:#eef1f5;color:#445064}
+body[data-ds-dark-theme] .gl-root .gl-note-c0{background:rgba(69,130,230,.18);color:#8ab4ff}
+body[data-ds-dark-theme] .gl-root .gl-note-c1{background:rgba(34,176,125,.18);color:#6fe0aa}
+body[data-ds-dark-theme] .gl-root .gl-note-c2{background:rgba(227,115,24,.2);color:#ffc078}
+body[data-ds-dark-theme] .gl-root .gl-note-c3{background:rgba(214,73,65,.2);color:#ff9b93}
+body[data-ds-dark-theme] .gl-root .gl-note-c4{background:rgba(139,107,255,.2);color:#c4b0ff}
+body[data-ds-dark-theme] .gl-root .gl-note-c5{background:rgba(25,181,201,.2);color:#7fe0ee}
+body[data-ds-dark-theme] .gl-root .gl-note-c6{background:rgba(232,121,185,.2);color:#ffa8d6}
+body[data-ds-dark-theme] .gl-root .gl-note-c7{background:rgba(255,255,255,.1);color:#b9c2d0}
 .gl-event-project{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 6px;border-radius:3px;background:var(--td-bg-color-secondarycontainer);color:var(--td-text-color-secondary);font-size:11px;line-height:16px;font-family:var(--td-font-family-code)}
 .gl-note-input{flex:1 1 auto;min-width:0;height:24px;padding:0 6px;border:1px solid var(--td-brand-color);border-radius:4px;background:var(--td-bg-color-container);color:var(--td-text-color-primary);font:var(--td-font-body-medium);outline:none}
 .gl-edit-btn{opacity:0;pointer-events:none;transition:opacity .12s linear}
@@ -1768,7 +1799,7 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
           action || null,
         );
 
-      const renderEventRow = (item, webUrl, showProject) => {
+      const renderEventRow = (item, webUrl, showProject, noteColors) => {
         const view = describeEvent(item, webUrl);
         return h(
           'div',
@@ -1820,8 +1851,10 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
             ? h(
                 'span',
                 {
-                  className: 'gl-event-note',
-                  title: '项目备注：' + notes[item.projectName],
+                  className:
+                    'gl-event-note gl-note-c' +
+                    ((noteColors && noteColors.get(item.projectName)) || 0),
+                  title: '项目备注：' + notes[item.projectName] + '（' + item.projectName + '）',
                 },
                 notes[item.projectName],
               )
@@ -1877,7 +1910,9 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
                   h('span', { className: 'gl-day-node' }, h(GlyphIcon, { name: 'commit', size: 14 })),
                   h('span', { className: 'gl-day-label' }, group.label),
                 ),
-                group.items.map((item) => renderEventRow(item, options.webUrl(item), options.showProject)),
+                group.items.map((item) =>
+                  renderEventRow(item, options.webUrl(item), options.showProject, options.noteColors),
+                ),
               ),
             ),
           ),
@@ -1918,8 +1953,9 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
         );
       };
 
-      const renderOverview = () =>
-        h(
+      const renderOverview = () => {
+        const noteColors = noteColorMap(overview.items || []);
+        return h(
           'div',
           { className: 'gl-activity' },
           renderFilterTabs(),
@@ -1931,11 +1967,13 @@ a.gl-commit-sha:hover{background:var(--td-brand-color-light);color:var(--td-bran
                   ? '还没有合并事件'
                   : '还没有任何活动',
             showProject: true,
+            noteColors,
             webUrl: (item) => item.projectWebUrl || '',
             onRetry: () => loadOverview(eventFilter, true, 1),
             onMore: () => loadOverview(eventFilter, false, overview.page + 1),
           }),
         );
+      };
 
       const renderMain = () => {
         if (phase === 'loading') return renderEmptyState('正在连接 GitLab…', '正在读取本机保存的连接设置。');
